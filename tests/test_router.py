@@ -1,16 +1,18 @@
 import json
 
 import pytest
-from httpx import AsyncClient
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
 
 from config import backend_loader
 from handlers import ollama_handler, http_handler
 from main import app
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
 
@@ -54,7 +56,8 @@ async def test_chat_completion_ollama(monkeypatch, client):
 @pytest.mark.asyncio
 async def test_chat_completion_http(monkeypatch, client):
     monkeypatch.setattr(backend_loader, "resolve_backend", lambda model: {"type": "http", "base_url": "http://remote"})
-    monkeypatch.setattr(http_handler, "handle_chat_completion", lambda body, base_url: _dummy_response(body))
+    import router as router_module
+    monkeypatch.setattr(router_module, "http_handle", lambda body, base_url: _dummy_response(body))
 
     payload = {"model": "company-gpt", "messages": [{"role": "user", "content": "hello"}]}
     resp = await client.post("/v1/chat/completions", json=payload)

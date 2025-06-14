@@ -4,10 +4,12 @@ globs:
 alwaysApply: true
 ---
 
-- Follow modular architecture and clean code principles. :contentReference[oaicite:1]{index=1}
-- Implement structured logging with context (request IDs, latency, errors).
-- Use **commit best practices**: small, atomic commits with clear messages.
-- Ensure all commands are run within the project’s **virtual environment**. :contentReference[oaicite:2]{index=2}
-- **Exclude** `.venv/` or other virtualenv directories and docs build artifacts from version control. :contentReference[oaicite:3]{index=3}
-- **Pin dependencies** exactly in `requirements.txt` or `Pipfile.lock`. :contentReference[oaicite:4]{index=4}
-- Include a `pyproject.toml` or `setup.cfg` to centralize tool configurations (packaging, linting, builds). :contentReference[oaicite:5]{index=5}
+
+- Follow modular architecture and clean code.
+- Implement structured logging with context.
+- Use commit best practices: atomic commits with clear messages.
+- Run all commands from the project's **virtual environment**.
+- Exclude `.venv/`, doc builds, build artifacts.
+- Pin dependencies in `requirements.txt` or `Pipfile.lock`.
+- Include `pyproject.toml` or `setup.cfg` for centralized tool config.
+- Use linters (flake8/ruff), formatters (Black), and import sorting (isort) with pre-commit hooks. :contentReference[oaicite:1]{index=1}

@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 88
-exclude = "\.venv|build|dist|docs/_build"
+exclude = "\\.venv|build|dist|docs/_build"
 
 [tool.isort]
 profile = "black"
@@ -13,7 +13,7 @@ exclude = [".venv", "build", "dist"]
 
 [tool.flake8]
 max-line-length = 88
-exclude = .venv,build,dist
+exclude = ".venv,build,dist"
 
 [project.scripts]
 genai-router = "cli:app" 

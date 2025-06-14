@@ -1,0 +1,9 @@
+---
+description: Force full implementation, not scaffold
+globs: *.py
+alwaysApply: false
+---
+
+- When generating files or classes, generate **complete implementations**, including imports, logic, docstrings, and basic tests.
+- Avoid placeholder scaffolding; provide fully functional code ready to run or test.
+- Use internal project context to craft methods end-to-end, not generate stubs only.

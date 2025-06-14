@@ -1,7 +1,6 @@
 ---
 description: Test-driven development guidance
-globs:
-  - "**/*.py"
+globs: **/*.py
 alwaysApply: false
 ---
 

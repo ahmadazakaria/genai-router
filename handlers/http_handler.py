@@ -7,6 +7,7 @@ server that already speaks the OpenAI protocol (e.g. an internal MCP service).
 from __future__ import annotations
 
 from typing import Dict, Any, AsyncGenerator, Union
+import json
 
 import httpx
 
@@ -25,6 +26,25 @@ async def _post_chat(url: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     return resp.json()
 
 
+async def _stream_chat(url: str, payload: Dict[str, Any]) -> AsyncGenerator[str, None]:
+    """Stream chat completion chunks from an OpenAI-compatible HTTP backend."""
+
+    async with httpx.AsyncClient(timeout=None) as client:
+        async with client.stream("POST", url, json=payload) as resp:
+            if resp.status_code >= 400:
+                raise HTTPBackendError(
+                    f"HTTP backend error {resp.status_code}: {await resp.aread()}"
+                )
+
+            async for line in resp.aiter_lines():
+                if not line:
+                    continue
+                # Ensure SSE format (prefix with data: )
+                if not line.startswith("data:"):
+                    line = f"data: {line}"
+                yield line + "\n\n"
+
+
 async def handle_chat_completion(
     request_body: ChatCompletionRequest, *, base_url: str
 ) -> Union[Dict[str, Any], AsyncGenerator[str, None]]:
@@ -36,7 +56,11 @@ async def handle_chat_completion(
 
     payload = request_body.dict()
 
-    if payload.get("stream"):
-        raise HTTPBackendError("Streaming not yet supported for HTTP backend.")
+    url = base_url.rstrip("/") + "/v1/chat/completions"
 
-    return await _post_chat(base_url.rstrip("/") + "/v1/chat/completions", payload) 
+    if payload.get("stream"):
+        return _stream_chat(url, payload)
+
+    resp = await _post_chat(url, payload)
+    # Ensure OpenAI schema (backend assumed compatible)
+    return resp 
