@@ -7,6 +7,7 @@ from httpx import AsyncClient, ASGITransport
 from config import backend_loader
 from handlers import ollama_handler, http_handler
 from main import app
+from config.settings import get_settings
 
 
 @pytest_asyncio.fixture
@@ -45,6 +46,8 @@ async def test_chat_completion_ollama(monkeypatch, client):
     # Mock resolution to ollama backend
     monkeypatch.setattr(backend_loader, "resolve_backend", lambda model: {"type": "ollama"})
     monkeypatch.setattr(ollama_handler, "handle_chat_completion", _dummy_response)
+    monkeypatch.delenv("GENAI_API_KEYS", raising=False)
+    get_settings.cache_clear()
 
     payload = {"model": "llama3", "messages": [{"role": "user", "content": "hi"}]}
     resp = await client.post("/v1/chat/completions", json=payload)
@@ -58,6 +61,8 @@ async def test_chat_completion_http(monkeypatch, client):
     monkeypatch.setattr(backend_loader, "resolve_backend", lambda model: {"type": "http", "base_url": "http://remote"})
     import router as router_module
     monkeypatch.setattr(router_module, "http_handle", lambda body, base_url: _dummy_response(body))
+    monkeypatch.delenv("GENAI_API_KEYS", raising=False)
+    get_settings.cache_clear()
 
     payload = {"model": "company-gpt", "messages": [{"role": "user", "content": "hello"}]}
     resp = await client.post("/v1/chat/completions", json=payload)

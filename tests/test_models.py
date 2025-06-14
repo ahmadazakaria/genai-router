@@ -3,6 +3,7 @@ import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 
 from main import app
+from config.settings import get_settings
 
 
 @pytest_asyncio.fixture
@@ -13,7 +14,10 @@ async def client():
 
 
 @pytest.mark.asyncio
-async def test_list_models(client):
+async def test_list_models(client, monkeypatch):
+    monkeypatch.delenv("GENAI_API_KEYS", raising=False)
+    get_settings.cache_clear()
+
     resp = await client.get("/v1/models")
     assert resp.status_code == 200
 
