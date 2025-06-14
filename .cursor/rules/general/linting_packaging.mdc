@@ -1,0 +1,9 @@
+---
+description: 
+globs: *.py
+alwaysApply: false
+---
+
+- Use linters such as **flake8**, **ruff**, and autoformatters like **Black**, with config in `pyproject.toml` or `.flake8`. :contentReference[oaicite:8]{index=8}
+- Enforce import sorting via `isort`.
+- Include a `pre-commit` hook configuration to run formatting and linting automatically. :contentReference[oaicite:9]{index=9}

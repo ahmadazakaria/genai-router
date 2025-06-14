@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+.venv
+env/
+ENV/
+
+# Test & coverage artifacts
+.pytest_cache/
+.coverage
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Sphinx docs
+docs/_build/
+
+# Editor & OS files
+*.swp
+.DS_Store
+Thumbs.db 

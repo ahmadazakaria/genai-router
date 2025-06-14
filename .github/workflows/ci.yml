@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up virtual environment & install deps
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run linters (Black, isort, Ruff, flake8)
+        run: |
+          source .venv/bin/activate
+          black --check .
+          isort --check .
+          ruff .
+          flake8
+
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          pytest -q
+
+      - name: Build docs
+        run: |
+          python -m pip install Sphinx furo sphinx-autodoc-typehints
+          sphinx-build -b html docs/ docs/_build 

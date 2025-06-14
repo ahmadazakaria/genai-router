@@ -1,0 +1,16 @@
+# Example backend routing configuration
+# Adjust model names and endpoints to your environment.
+
+default_backend: ollama
+
+backends:
+  ollama:
+    type: ollama
+    base_url: http://localhost:11434
+  http-mcp:
+    type: http
+    base_url: http://mcp.internal:8000
+
+routing:
+  llama3: ollama
+  company-gpt: http-mcp 

@@ -1,0 +1,12 @@
+---
+description: Sphinx documentation best practices
+globs: docs/**/*.rst
+alwaysApply: false
+---
+
+- Use `sphinx-quickstart` to generate your initial structure and `conf.py`.
+- Include `sphinx.ext.autodoc` and `sphinx.ext.napoleon` extensions to auto-generate documentation from docstrings. :contentReference[oaicite:1]{index=1}
+- Maintain docstrings in Sphinx/reST or Google/NumPy style for compatibility. :contentReference[oaicite:2]{index=2}
+- Use `sphinx-apidoc` to generate `.rst` files for modules; include them in the toctree. :contentReference[oaicite:3]{index=3}
+- Target output formats like HTML and PDF, and optionally support multilingual and multi-version docs. :contentReference[oaicite:4]{index=4}
+- Exclude build artifacts (e.g., `docs/_build/`) from source control.

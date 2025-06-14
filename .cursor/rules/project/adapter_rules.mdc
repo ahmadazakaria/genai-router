@@ -1,0 +1,9 @@
+---
+description: Test-driven development guidance
+globs:
+  - "**/*.py"
+alwaysApply: false
+---
+
+- Write tests using pytest before or alongside implementation.
+- Use mocks/stubs for external dependencies.

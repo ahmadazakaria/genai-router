@@ -1,0 +1,9 @@
+---
+description: 
+globs: **/*.py
+alwaysApply: false
+---
+
+- Write tests using `pytest`, ideally before or alongside code. :contentReference[oaicite:6]{index=6}
+- Use mocks/stubs for external dependencies to maintain isolation.
+- Adhere to **PEP 8** style conventions (4-space indent, ≤ 79‑char line length, grouped imports). :contentReference[oaicite:7]{index=7}

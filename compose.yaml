@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+
+  router:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: genai-router
+    depends_on:
+      - ollama
+    environment:
+      - GENAI_OLLAMA_BASE_URL=http://ollama:11434
+    ports:
+      - "8000:8000"
+    restart: unless-stopped 
+
+volumes:
+  ollama-data: 

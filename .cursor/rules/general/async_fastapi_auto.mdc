@@ -1,0 +1,7 @@
+---
+description: Ensure async FastAPI architecture
+globs:*.py
+alwaysApply: false
+---
+
+- All FastAPI route handlers must be defined as `async def` and avoid blocking operations.
