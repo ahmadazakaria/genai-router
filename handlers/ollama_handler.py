@@ -111,7 +111,7 @@ async def _stream_ollama_chat(payload: Dict[str, Any]) -> AsyncGenerator[str, No
 async def handle_chat_completion(request_body: ChatCompletionRequest) -> Union[Dict[str, Any], AsyncGenerator[str, None]]:
     """Forward a ChatCompletionRequest to the Ollama HTTP server and return the raw JSON."""
 
-    payload = request_body.dict()
+    payload = request_body.model_dump()
 
     if payload.get("stream"):
         # Return an async generator producing SSE text lines

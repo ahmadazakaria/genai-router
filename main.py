@@ -12,6 +12,7 @@ from middleware.auth_middleware import APIKeyAuthMiddleware
 from fastapi.responses import Response
 from middleware.ratelimit_middleware import RateLimitMiddleware
 from typing import Any
+from contextlib import asynccontextmanager
 
 # Prometheus (optional dev dependency)
 try:
@@ -37,7 +38,12 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     _OTEL_AVAILABLE = False
 
-app = FastAPI(title="GenAI Router")
+@asynccontextmanager
+async def lifespan(app):
+    yield
+    await ollama_handler.shutdown()
+
+app = FastAPI(title="GenAI Router", lifespan=lifespan)
 
 # API key auth middleware (no-op when GENAI_API_KEYS empty)
 app.add_middleware(APIKeyAuthMiddleware)
@@ -52,11 +58,6 @@ if _PROM_AVAILABLE:
     app.add_middleware(MetricsMiddleware)
 
 app.include_router(api_router, prefix="/v1")
-
-# Gracefully close shared HTTP client on shutdown
-@app.on_event("shutdown")
-async def _shutdown_event():
-    await ollama_handler.shutdown()
 
 # Expose Prometheus metrics
 if _PROM_AVAILABLE:

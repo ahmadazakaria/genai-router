@@ -54,7 +54,7 @@ async def handle_chat_completion(
     similarly to the Ollama handler.
     """
 
-    payload = request_body.dict()
+    payload = request_body.model_dump()
 
     url = base_url.rstrip("/") + "/v1/chat/completions"
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 
 class Message(BaseModel):
@@ -28,5 +28,4 @@ class ChatCompletionResponse(BaseModel):
     choices: List[ChatCompletionChoice]
     usage: Usage
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
