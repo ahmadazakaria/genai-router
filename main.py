@@ -10,6 +10,8 @@ from middleware.logging_middleware import RequestLoggingMiddleware
 from handlers import ollama_handler
 from middleware.auth_middleware import APIKeyAuthMiddleware
 from fastapi.responses import Response
+from middleware.ratelimit_middleware import RateLimitMiddleware
+from typing import Any
 
 # Prometheus (optional dev dependency)
 try:
@@ -20,6 +22,21 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     _PROM_AVAILABLE = False
 
+# OpenTelemetry (optional)
+try:
+    import os
+    from opentelemetry import trace  # type: ignore
+    from opentelemetry.sdk.resources import Resource  # type: ignore
+    from opentelemetry.sdk.trace import TracerProvider  # type: ignore
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter  # type: ignore
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter  # type: ignore
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor  # type: ignore
+
+    _OTEL_AVAILABLE = True
+except ModuleNotFoundError:  # pragma: no cover
+    _OTEL_AVAILABLE = False
+
 app = FastAPI(title="GenAI Router")
 
 # API key auth middleware (no-op when GENAI_API_KEYS empty)
@@ -27,6 +44,9 @@ app.add_middleware(APIKeyAuthMiddleware)
 
 # Structured logging middleware
 app.add_middleware(RequestLoggingMiddleware)
+
+# Rate limit middleware
+app.add_middleware(RateLimitMiddleware)
 
 if _PROM_AVAILABLE:
     app.add_middleware(MetricsMiddleware)
@@ -52,3 +72,27 @@ else:
 @app.get("/healthz")
 async def healthz() -> dict[str, str]:  # noqa: D401
     return {"status": "ok"}
+
+# --------------------
+# OpenTelemetry setup
+# --------------------
+
+if _OTEL_AVAILABLE and not getattr(app.state, "otel_instrumented", False):
+    endpoint = os.getenv("GENAI_OTEL_ENDPOINT")
+    service_name = os.getenv("GENAI_OTEL_SERVICE_NAME", "genai-router")
+
+    resource = Resource.create({"service.name": service_name})
+    provider = TracerProvider(resource=resource)
+
+    if endpoint:
+        exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
+    else:
+        exporter = ConsoleSpanExporter()
+
+    provider.add_span_processor(BatchSpanProcessor(exporter))
+    trace.set_tracer_provider(provider)
+
+    FastAPIInstrumentor().instrument_app(app, tracer_provider=provider)
+    HTTPXClientInstrumentor().instrument(tracer_provider=provider)
+
+    app.state.otel_instrumented = True
