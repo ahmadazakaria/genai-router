@@ -92,10 +92,20 @@ async def _stream_ollama_chat(payload: Dict[str, Any]) -> AsyncGenerator[str, No
             raise OllamaBackendError(f"Ollama backend error {resp.status_code}: {text}")
 
         async for line in resp.aiter_lines():
-            # Ollama already sends plain JSON lines. Convert to SSE format.
+            # Skip empty keep-alive lines.
             if not line:
                 continue
-            yield f"data: {line}\n\n"
+
+            try:
+                raw_msg: Dict[str, Any] = json.loads(line)
+            except json.JSONDecodeError:
+                # Forward raw line if it is not valid JSON (unexpected).
+                yield f"data: {line}\n\n"
+                continue
+
+            # Convert Ollama chunk → OpenAI ChatCompletionChunk shape.
+            openai_chunk = _ollama_chunk_to_openai(raw_msg)
+            yield f"data: {json.dumps(openai_chunk, separators=(',', ':'))}\n\n"
 
 
 async def handle_chat_completion(request_body: ChatCompletionRequest) -> Union[Dict[str, Any], AsyncGenerator[str, None]]:
@@ -146,4 +156,65 @@ def _ollama_to_openai(msg: Dict[str, Any]) -> Dict[str, Any]:
                 "total_tokens": msg.get("eval_count", 0) + msg.get("prompt_eval_count", 0),
             },
         ),
+    }
+
+
+def _ollama_chunk_to_openai(msg: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert a single streaming chunk from Ollama into OpenAI SSE chunk format.
+
+    OpenAI streaming uses Server-Sent Events where each *data* line contains a
+    JSON object of type ``chat.completion.chunk``.  The minimal schema is::
+
+        {
+            "id": "...",
+            "object": "chat.completion.chunk",
+            "model": "…",
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": {"role": "assistant", "content": "Hi"},
+                    "finish_reason": null
+                }
+            ]
+        }
+
+    Ollama, on the other hand, streams lines like::
+
+        {
+            "id": "...",
+            "model": "…",
+            "created_at": "…",
+            "message": {"role": "assistant", "content": "Hi"},
+            "done": false,
+            "done_reason": null
+        }
+
+    The helper below converts the latter into the former so the official
+    ``openai`` Python SDK can parse the stream seamlessly.
+    """
+
+    message: Dict[str, Any] | None = msg.get("message")
+
+    # The *delta* payload is optional on the final chunk – when Ollama sets
+    # ``done == true`` – so we only include role/content keys that exist.
+    delta: Dict[str, Any] = {}
+    if message is not None:
+        if "role" in message:
+            delta["role"] = message["role"]
+        if "content" in message:
+            delta["content"] = message["content"]
+
+    return {
+        "id": msg.get("id", "chatcmpl-ollama"),
+        "object": "chat.completion.chunk",
+        "model": msg.get("model"),
+        "choices": [
+            {
+                "index": 0,
+                "delta": delta,
+                # On the final chunk Ollama sets ``done`` true and can provide
+                # ``done_reason``.  We forward that, otherwise ``null``.
+                "finish_reason": msg.get("done_reason") if msg.get("done") else None,
+            }
+        ],
     }
