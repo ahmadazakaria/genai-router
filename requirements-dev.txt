@@ -4,4 +4,5 @@ httpx[http2]>=0.27.0
 ruff>=0.4.1
 black>=24.4.0
 isort>=5.13.2
-Sphinx>=7.3.0 
+Sphinx>=7.3.0
+furo>=2024.1.0 
