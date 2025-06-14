@@ -1,0 +1,16 @@
+// Cursor Coding Rules for GenAI Router
+
+rule "OpenAI API Compatibility" {
+  description = "All endpoints must mimic OpenAI's request/response structure."
+  enforce = true
+}
+
+rule "Async FastAPI" {
+  description = "All route handlers must be async functions using FastAPI."
+  enforce = true
+}
+
+rule "Modular Handlers" {
+  description = "Backend logic must be separated in handlers/ directory."
+  enforce = true
+}
