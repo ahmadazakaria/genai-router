@@ -3,16 +3,17 @@ import json
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
-
+import importlib, sys
 from config import backend_loader
 from handlers import ollama_handler, http_handler
-from main import app
 from config.settings import get_settings
 
 
 @pytest_asyncio.fixture
 async def client():
-    transport = ASGITransport(app=app)
+    # Import app fresh for this fixture (env already cleared by calling test)
+    app_mod = importlib.reload(sys.modules["main"]) if "main" in sys.modules else importlib.import_module("main")
+    transport = ASGITransport(app=app_mod.app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
@@ -47,7 +48,9 @@ async def test_chat_completion_ollama(monkeypatch, client):
     monkeypatch.setattr(backend_loader, "resolve_backend", lambda model: {"type": "ollama"})
     monkeypatch.setattr(ollama_handler, "handle_chat_completion", _dummy_response)
     monkeypatch.delenv("GENAI_API_KEYS", raising=False)
+    monkeypatch.delenv("GENAI_RATE_LIMIT", raising=False)
     get_settings.cache_clear()
+    importlib.reload(sys.modules["main"])
 
     payload = {"model": "llama3", "messages": [{"role": "user", "content": "hi"}]}
     resp = await client.post("/v1/chat/completions", json=payload)
@@ -62,7 +65,9 @@ async def test_chat_completion_http(monkeypatch, client):
     import router as router_module
     monkeypatch.setattr(router_module, "http_handle", lambda body, base_url: _dummy_response(body))
     monkeypatch.delenv("GENAI_API_KEYS", raising=False)
+    monkeypatch.delenv("GENAI_RATE_LIMIT", raising=False)
     get_settings.cache_clear()
+    importlib.reload(sys.modules["main"])
 
     payload = {"model": "company-gpt", "messages": [{"role": "user", "content": "hello"}]}
     resp = await client.post("/v1/chat/completions", json=payload)

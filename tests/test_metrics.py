@@ -19,7 +19,10 @@ async def client():
 @pytest.mark.asyncio
 async def test_healthz(client, monkeypatch):
     monkeypatch.delenv("GENAI_API_KEYS", raising=False)
+    monkeypatch.delenv("GENAI_RATE_LIMIT", raising=False)
     get_settings.cache_clear()
+    import importlib, sys
+    importlib.reload(sys.modules["main"])
     resp = await client.get("/healthz")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
@@ -29,7 +32,10 @@ async def test_healthz(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_metrics(client, monkeypatch):
     monkeypatch.delenv("GENAI_API_KEYS", raising=False)
+    monkeypatch.delenv("GENAI_RATE_LIMIT", raising=False)
     get_settings.cache_clear()
+    import importlib, sys
+    importlib.reload(sys.modules["main"])
     # Make one request to increment metrics
     await client.get("/healthz")
     resp = await client.get("/metrics")

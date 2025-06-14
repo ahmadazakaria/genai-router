@@ -16,7 +16,10 @@ async def client():
 @pytest.mark.asyncio
 async def test_list_models(client, monkeypatch):
     monkeypatch.delenv("GENAI_API_KEYS", raising=False)
+    monkeypatch.delenv("GENAI_RATE_LIMIT", raising=False)
     get_settings.cache_clear()
+    import importlib, sys
+    importlib.reload(sys.modules["main"])
 
     resp = await client.get("/v1/models")
     assert resp.status_code == 200
