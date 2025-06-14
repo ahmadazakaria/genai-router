@@ -1,0 +1,22 @@
+{
+  "name": "GenAI Router Dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "ms-python.black-formatter",
+    "mhutchie.git-graph"
+  ],
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": { "label": "GenAI Router" }
+  },
+  "postCreateCommand": "python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && pip install -r requirements-dev.txt && pre-commit install",
+  "remoteUser": "vscode"
+} 
