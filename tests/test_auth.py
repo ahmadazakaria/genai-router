@@ -18,6 +18,8 @@ async def client():
 async def test_auth_missing_key(monkeypatch, client):
     monkeypatch.setenv("GENAI_API_KEYS", "secret123")
     get_settings.cache_clear()
+    import importlib, sys
+    importlib.reload(sys.modules["main"])
 
     resp = await client.get("/v1/models")
     assert resp.status_code == 401
@@ -27,6 +29,8 @@ async def test_auth_missing_key(monkeypatch, client):
 async def test_auth_valid_key(monkeypatch, client):
     monkeypatch.setenv("GENAI_API_KEYS", "secret123")
     get_settings.cache_clear()
+    import importlib, sys
+    importlib.reload(sys.modules["main"])
 
     headers = {"Authorization": "Bearer secret123"}
     resp = await client.get("/v1/models", headers=headers)

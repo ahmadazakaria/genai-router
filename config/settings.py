@@ -8,6 +8,8 @@ class Settings(BaseSettings):
 
     ollama_base_url: str = "http://localhost:11434"
     api_keys: str | None = None  # Comma-separated list of accepted keys
+    # e.g. "60/min" or "100/hour". Empty → no rate limiting.
+    rate_limit: str | None = None
 
     @property
     def allowed_api_keys(self) -> set[str]:
@@ -22,6 +24,28 @@ class Settings(BaseSettings):
 
         # Split on comma and strip whitespace.
         return {k.strip() for k in self.api_keys.split(",") if k.strip()}
+
+    @property
+    def parsed_rate_limit(self) -> tuple[int, int] | None:
+        """Return `(max_requests, window_seconds)` if rate limiting is configured."""
+
+        if not self.rate_limit:
+            return None
+
+        try:
+            amount, per = self.rate_limit.split("/")
+            max_req = int(amount)
+            if per == "sec":
+                window = 1
+            elif per == "min" or per == "minute":
+                window = 60
+            elif per == "hour":
+                window = 3600
+            else:
+                window = int(per)
+            return max_req, window
+        except Exception:  # pragma: no cover
+            return None
 
     class Config:
         env_prefix = "GENAI_"
