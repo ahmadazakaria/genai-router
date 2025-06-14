@@ -13,6 +13,8 @@ from handlers.ollama_handler import handle_chat_completion as ollama_handle, Oll
 from handlers.http_handler import handle_chat_completion as http_handle, HTTPBackendError
 from config.backend_loader import resolve_backend
 from schemas.chat import ChatCompletionRequest, ChatCompletionResponse
+from schemas.models import ModelList, ModelInfo
+from config import backend_loader
 
 router = APIRouter()
 
@@ -40,3 +42,30 @@ async def chat_completions(body: ChatCompletionRequest):
     # Validate response with schema before sending back
     validated = ChatCompletionResponse(**result)
     return validated
+
+@router.get("/models", response_model=ModelList)
+async def list_models() -> ModelList:  # noqa: D401
+    """Return all configured model names in OpenAI-compatible format.
+
+    The implementation derives the list from ``config/backends.yaml``.  When no
+    config file exists, the router is running in *single Ollama* mode, so we
+    expose the default ``llama3`` model.
+    """
+
+    raw_cfg = backend_loader._load_raw_config()
+
+    models: list[ModelInfo] = []
+
+    if not raw_cfg:
+        # No config → single-model Ollama setup.
+        models.append(ModelInfo(id="llama3", owned_by="ollama"))
+    else:
+        routing: dict[str, str] = raw_cfg.get("routing", {})
+        backends: dict[str, dict] = raw_cfg.get("backends", {})
+
+        for model_name, backend_key in routing.items():
+            backend = backends.get(backend_key, {})
+            owned_by = backend.get("type", "backend")
+            models.append(ModelInfo(id=model_name, owned_by=owned_by))
+
+    return ModelList(data=models)

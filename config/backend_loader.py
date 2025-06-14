@@ -58,4 +58,18 @@ def resolve_backend(model_name: str) -> Dict[str, Any]:
     if backend_key is None or backend_key not in backends:
         raise ValueError(f"No backend configured for model '{model_name}' and no default backend set")
 
-    return backends[backend_key] 
+    return backends[backend_key]
+
+
+def list_models() -> list[str]:
+    """Return list of model names known to the router.
+
+    This is a lightweight convenience wrapper used by the `/v1/models` route.
+    """
+
+    raw_cfg = _load_raw_config()
+
+    if not raw_cfg:
+        return ["llama3"]
+
+    return list(raw_cfg.get("routing", {}).keys()) 
